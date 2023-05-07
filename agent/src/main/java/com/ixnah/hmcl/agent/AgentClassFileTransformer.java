@@ -6,10 +6,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
-import java.nio.file.Files;
 import java.security.ProtectionDomain;
 
 public class AgentClassFileTransformer implements ClassFileTransformer {
@@ -25,15 +22,16 @@ public class AgentClassFileTransformer implements ClassFileTransformer {
             ClassWriter writer = new ClassWriter(LoaderApi.getClassWriteFlags());
             node.accept(writer);
             LoaderApi.setClassWriteFlags(0);
-            File file = new File("./modify/" + className + ".class");
-            file.getParentFile().mkdirs();
-            byte[] bytes = writer.toByteArray();
-            try {
-                Files.write(file.toPath(), bytes);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            return bytes;
+//            File file = new File("./modify/" + className + ".class");
+//            file.getParentFile().mkdirs();
+//            byte[] bytes = writer.toByteArray();
+//            try {
+//                Files.write(file.toPath(), bytes);
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//            return bytes;
+            return writer.toByteArray();
         }
         return null;
     }
