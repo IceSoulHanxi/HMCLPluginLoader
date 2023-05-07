@@ -4,4 +4,4 @@
 
 移除测试版HMCL首页信息提示
 
-![image](example/images/example.png)
+![image](images/example.png)
