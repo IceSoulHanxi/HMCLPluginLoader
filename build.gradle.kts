@@ -23,7 +23,7 @@ tasks.create("buildExecutableFile") {
         val baseUrl = "https://repo1.maven.org/maven2/org/glavo/hmcl/hmcl-dev"
         if (version.isBlank()) {
             val metadataURL = uri("$baseUrl/maven-metadata.xml").toURL()
-            val latestReader = object: DefaultHandler() {
+            val latestReader = object : DefaultHandler() {
                 val content = StringBuilder()
                 var startRead = false
 
@@ -33,7 +33,7 @@ tasks.create("buildExecutableFile") {
 
                 override fun characters(ch: CharArray?, start: Int, length: Int) {
                     if (startRead) {
-                        content.append(ch!!.sliceArray(start until start+length))
+                        content.append(ch!!.sliceArray(start until start + length))
                         startRead = false
                     }
                 }
@@ -67,7 +67,7 @@ tasks.create("buildExecutableFile") {
 }
 
 tasks.create("packageDistDir", Copy::class) {
-    this.dependsOn(task("jar"), tasks["buildExecutableFile"])
+    this.dependsOn(tasks.findByPath(":agent:build"), tasks.findByPath(":example:build"), tasks["buildExecutableFile"])
     group = "build"
     val exeFileDir = File(buildDir.absoluteFile, "buildExecutableFile").also(File::mkdirs)
     val agentDir = File(projectDir.absoluteFile, "agent/build/libs").also(File::mkdirs)
