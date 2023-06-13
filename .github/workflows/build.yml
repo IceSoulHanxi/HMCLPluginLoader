@@ -1,0 +1,61 @@
+name: Build HMCL executable file with plugin loader
+
+on: [ workflow_dispatch ]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/cache@v1
+        with:
+          path: C:\Users\runneradmin\AppData\Local\Temp\chocolatey
+          key: ${{ runner.os }}-chocolatey-${{ matrix.os }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-chocolatey-${{ matrix.os }}-
+            ${{ runner.os }}-chocolatey-
+
+        # https://stackoverflow.com/questions/62551793/how-to-automate-from-command-line-the-installation-of-a-visual-studio-build-to
+      - name: Download Windows Sdk
+        run: |
+          choco config get cacheLocation
+          choco install --no-progress visualstudio2017buildtools --params "--passive --wait --add Microsoft.VisualStudio.Workload.MSBuildTools --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Windows10SDK.18362 --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.TestTools.BuildTools --add Microsoft.VisualStudio.Component.VC.ASAN --add Microsoft.VisualStudio.Component.VC.140 --add Microsoft.VisualStudio.Component.WinXP"
+
+      - name: Add msbuild to PATH
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Clone HMCL repo
+        uses: GuillaumeFalourd/clone-github-repo-action@v2
+        with:
+          owner: 'huanghongxun'
+          repository: 'HMCL'
+
+      - name: Build HMCLauncher
+        shell: cmd
+        run: |
+          cd HMCL
+          git apply ../patch/javaagent.patch
+          cd HMCLauncher
+          MSBuild HMCLauncher.sln /t:Rebuild /p:Configuration=Release;Platform=x86
+          if not exist ..\\..\\build\\tmp\\buildExecutableFile mkdir ..\\..\\build\\tmp\\buildExecutableFile
+          copy release\HMCLauncher.exe ..\\..\\build\\tmp\\buildExecutableFile
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+
+      - name: Build with Gradle
+        uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
+        with:
+          arguments: packageDistDir
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: HMCLPluginLoader
+          path: build/dist

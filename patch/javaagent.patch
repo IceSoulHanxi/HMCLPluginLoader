@@ -1,0 +1,15 @@
+diff --git a/HMCLauncher/HMCL/main.cpp b/HMCLauncher/HMCL/main.cpp
+--- a/HMCLauncher/HMCL/main.cpp
++++ b/HMCLauncher/HMCL/main.cpp
+@@ -66,6 +66,11 @@
+
+   if (ERROR_SUCCESS != MyGetEnvironmentVariable(L"HMCL_JAVA_OPTS", jvmOptions)) {
+     jvmOptions = L"-XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15"; // Default Options
++    std::wstring pluginLoaderPath = L".minecraft\\HMCLPluginLoader.jar";
++    std::wstring absoluteLoaderPath = workdir + L"\\" + pluginLoaderPath;
++    if (FindFirstFileExists(absoluteLoaderPath.c_str(), 0)) {
++      jvmOptions = jvmOptions + L" -javaagent:" + pluginLoaderPath; // Attach HMCL plugin loader
++    }
+   }
+
+   bool useChinese = GetUserDefaultUILanguage() == 2052; // zh-CN
