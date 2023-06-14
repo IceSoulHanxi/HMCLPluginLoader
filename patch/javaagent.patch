@@ -2,7 +2,7 @@ diff --git a/HMCLauncher/HMCL/main.cpp b/HMCLauncher/HMCL/main.cpp
 --- a/HMCLauncher/HMCL/main.cpp
 +++ b/HMCLauncher/HMCL/main.cpp
 @@ -66,6 +66,11 @@
-
+ 
    if (ERROR_SUCCESS != MyGetEnvironmentVariable(L"HMCL_JAVA_OPTS", jvmOptions)) {
      jvmOptions = L"-XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15"; // Default Options
 +    std::wstring pluginLoaderPath = L".minecraft\\HMCLPluginLoader.jar";
