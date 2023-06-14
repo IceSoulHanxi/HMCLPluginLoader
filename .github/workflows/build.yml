@@ -37,11 +37,14 @@ jobs:
         shell: cmd
         run: |
           cd HMCL
-          git apply ../patch/javaagent.patch
+          git apply --stat ..\patch\javaagent.patch
+          git apply --check ..\patch\javaagent.patch
+          git apply ..\patch\javaagent.patch
+          type HMCLauncher\HMCL\main.cpp
           cd HMCLauncher
           MSBuild HMCLauncher.sln /t:Rebuild /p:Configuration=Release;Platform=x86
-          if not exist ..\\..\\build\\tmp\\buildExecutableFile mkdir ..\\..\\build\\tmp\\buildExecutableFile
-          copy release\HMCLauncher.exe ..\\..\\build\\tmp\\buildExecutableFile
+          if not exist ..\..\build\tmp\buildExecutableFile mkdir ..\..\build\tmp\buildExecutableFile
+          copy release\HMCLauncher.exe ..\..\build\tmp\buildExecutableFile
 
       - name: Set up JDK
         uses: actions/setup-java@v3
