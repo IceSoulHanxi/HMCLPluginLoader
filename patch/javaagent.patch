@@ -11,5 +11,5 @@ diff --git a/HMCLauncher/HMCL/main.cpp b/HMCLauncher/HMCL/main.cpp
 +      jvmOptions = jvmOptions + L" -javaagent:" + pluginLoaderPath; // Attach HMCL plugin loader
 +    }
    }
-
+ 
    bool useChinese = GetUserDefaultUILanguage() == 2052; // zh-CN
