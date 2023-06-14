@@ -5,7 +5,9 @@ import org.pf4j.DefaultPluginManager;
 import org.pf4j.PluginManager;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.net.URLDecoder;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,6 +17,7 @@ import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
+@SuppressWarnings("unused")
 public class LoaderApi {
 
     private LoaderApi() {
@@ -79,7 +82,12 @@ public class LoaderApi {
 
     public static File getLoaderFile() {
         if (LOADER_FILE == null) {
-            LOADER_FILE = new File(LoaderApi.class.getProtectionDomain().getCodeSource().getLocation().getFile());
+            String loaderLocation = LoaderApi.class.getProtectionDomain().getCodeSource().getLocation().getFile();
+            try {
+                LOADER_FILE = new File(URLDecoder.decode(loaderLocation, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
         }
         return LOADER_FILE;
     }
