@@ -13,6 +13,8 @@ import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
+import static java.util.Objects.requireNonNull;
+
 public class LoaderApi {
 
     private LoaderApi() {
@@ -23,29 +25,32 @@ public class LoaderApi {
     private static final ThreadLocal<Integer> CLASS_WRITE_FLAGS = ThreadLocal.withInitial(() -> 0);
     private static final ThreadLocal<Integer> CLASS_READ_FLAGS = ThreadLocal.withInitial(() -> 0);
     private static PluginManager PLUGIN_MANAGER;
+    private static File LOADER_FILE;
+    private static File PLUGINS_DIR;
 
     @SafeVarargs
     public static void registerTransformers(Supplier<AsmClassTransformer>... transformerSuppliers) {
+        requireNonNull(transformerSuppliers, "transformer suppliers is null!");
         for (Supplier<AsmClassTransformer> transformerSupplier : transformerSuppliers) {
-            if (transformerSupplier != null) {
-                AsmClassTransformer transformer = transformerSupplier.get();
-                if (transformer != null) {
-                    TRANSFORMERS.put(transformer.name(), transformer);
-                }
-            }
+            requireNonNull(transformerSupplier, "transformer supplier is null!");
+            AsmClassTransformer transformer = requireNonNull(transformerSupplier.get(), "transformer is null!");
+            TRANSFORMERS.put(transformer.name(), transformer);
         }
     }
 
     public static void unregisterTransformer(AsmClassTransformer transformer) {
+        requireNonNull(transformer, "remove transformer is null!");
         TRANSFORMERS.remove(transformer.name());
     }
 
     public static void unregisterTransformer(String transformerName) {
+        requireNonNull(transformerName, "remove transformer name is null!");
         TRANSFORMERS.remove(transformerName);
     }
 
     public static void unregisterTransformer(Class<? extends AsmClassTransformer> transformerClass) {
-        TRANSFORMERS.values().stream().filter(transformerClass::isInstance).forEach(LoaderApi::unregisterTransformer);
+        requireNonNull(transformerClass, "remove transformer class is null");
+        TRANSFORMERS.values().removeIf(transformerClass::isInstance);
     }
 
     public static Stream<AsmClassTransformer> allTransformer() {
@@ -72,10 +77,23 @@ public class LoaderApi {
         CLASS_READ_FLAGS.set(flags);
     }
 
+    public static File getLoaderFile() {
+        if (LOADER_FILE == null) {
+            LOADER_FILE = new File(LoaderApi.class.getProtectionDomain().getCodeSource().getLocation().getFile());
+        }
+        return LOADER_FILE;
+    }
+
+    public static File getPluginsDir() {
+        if (PLUGINS_DIR == null) {
+            PLUGINS_DIR = new File(getLoaderFile().getParentFile(), "plugins");
+        }
+        return PLUGINS_DIR;
+    }
+
     public static PluginManager getPluginManager() {
         if (PLUGIN_MANAGER == null) {
-            File mcBaseDir = new File(".minecraft/plugins"); // TODO: 读配置获取hmcl默认游戏路径
-            PLUGIN_MANAGER = new DefaultPluginManager(mcBaseDir.toPath());
+            PLUGIN_MANAGER = new DefaultPluginManager(getPluginsDir().toPath());
         }
         return PLUGIN_MANAGER;
     }
