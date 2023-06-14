@@ -1,13 +1,10 @@
 package com.ixnah.hmcl.plugin.asm;
 
-import com.ixnah.hmcl.api.LoaderApi;
 import com.ixnah.hmcl.asm.AsmClassTransformer;
-import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
 import java.security.ProtectionDomain;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RemoveDevTipTransformer implements AsmClassTransformer {
