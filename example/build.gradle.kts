@@ -10,7 +10,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly(project(":agent"))
+    compileOnly(project(":loader"))
+    compileOnly("org.glavo.hmcl:hmcl-dev:3.6.11.264")
 }
 
 tasks.jar {

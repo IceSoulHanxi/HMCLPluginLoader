@@ -1,18 +1,15 @@
 package com.ixnah.hmcl.api;
 
 import com.ixnah.hmcl.asm.AsmClassTransformer;
-import org.pf4j.DefaultPluginManager;
+import com.ixnah.hmcl.pf4j.HmclPluginManager;
 import org.pf4j.PluginManager;
 
-import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Field;
-import java.net.URLDecoder;
+import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -24,12 +21,12 @@ public class LoaderApi {
         throw new UnsupportedOperationException();
     }
 
+    public static final String HMCL_MAIN_CLASS = "org.jackhuang.hmcl.Main";
     private static final Map<String, AsmClassTransformer> TRANSFORMERS = new ConcurrentHashMap<>();
     private static final ThreadLocal<Integer> CLASS_WRITE_FLAGS = ThreadLocal.withInitial(() -> 0);
     private static final ThreadLocal<Integer> CLASS_READ_FLAGS = ThreadLocal.withInitial(() -> 0);
-    private static PluginManager PLUGIN_MANAGER;
-    private static File LOADER_FILE;
-    private static File PLUGINS_DIR;
+    private static final AtomicReference<String[]> ARGS = new AtomicReference<>();
+    private static volatile PluginManager PLUGIN_MANAGER;
 
     @SafeVarargs
     public static void registerTransformers(Supplier<AsmClassTransformer>... transformerSuppliers) {
@@ -71,53 +68,30 @@ public class LoaderApi {
     }
 
     public static void setClassWriteFlags(int flags) {
-        CLASS_WRITE_FLAGS.remove();
         CLASS_WRITE_FLAGS.set(flags);
     }
 
     public static void setClassReadFlags(int flags) {
-        CLASS_READ_FLAGS.remove();
         CLASS_READ_FLAGS.set(flags);
     }
 
-    public static File getLoaderFile() {
-        if (LOADER_FILE == null) {
-            String loaderLocation = LoaderApi.class.getProtectionDomain().getCodeSource().getLocation().getFile();
-            try {
-                LOADER_FILE = new File(URLDecoder.decode(loaderLocation, "UTF-8"));
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return LOADER_FILE;
+    public static void setArgs(String... args) {
+        ARGS.set(args);
     }
 
-    public static File getPluginsDir() {
-        if (PLUGINS_DIR == null) {
-            PLUGINS_DIR = new File(getLoaderFile().getParentFile(), "plugins");
-        }
-        return PLUGINS_DIR;
+    public static String[] getArgs() {
+        String[] args = ARGS.get();
+        return args != null ? args : new String[0];
     }
 
     public static PluginManager getPluginManager() {
         if (PLUGIN_MANAGER == null) {
-            PLUGIN_MANAGER = new DefaultPluginManager(getPluginsDir().toPath());
-        }
-        return PLUGIN_MANAGER;
-    }
-
-    private static Logger hmclLogger;
-
-    public static Logger getHmclLogger() {
-        if (hmclLogger == null) {
-            try {
-                Field hmclLoggerField = Class.forName("org.jackhuang.hmcl.util.Logging").getField("LOG");
-                hmclLogger = (Logger) hmclLoggerField.get(null);
-            } catch (NoSuchFieldException | ClassNotFoundException | IllegalAccessException e) {
-                e.printStackTrace();
-                hmclLogger = Logger.getLogger("HMCL");
+            synchronized (LoaderApi.class) {
+                if (PLUGIN_MANAGER == null) {
+                    PLUGIN_MANAGER = new HmclPluginManager(Paths.get(".minecraft/plugins"));
+                }
             }
         }
-        return hmclLogger;
+        return PLUGIN_MANAGER;
     }
 }

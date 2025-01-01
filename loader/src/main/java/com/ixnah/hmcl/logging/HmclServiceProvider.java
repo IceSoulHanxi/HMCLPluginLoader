@@ -7,7 +7,7 @@ import org.slf4j.helpers.BasicMarkerFactory;
 import org.slf4j.spi.MDCAdapter;
 import org.slf4j.spi.SLF4JServiceProvider;
 
-public class JULServiceProvider implements SLF4JServiceProvider {
+public class HmclServiceProvider implements SLF4JServiceProvider {
 
     /**
      * Declare the version of the SLF4J API this implementation is compiled
@@ -41,7 +41,7 @@ public class JULServiceProvider implements SLF4JServiceProvider {
 
     @Override
     public void initialize() {
-        loggerFactory = new JULLoggerFactory();
+        loggerFactory = new HmclLoggerFactory();
         markerFactory = new BasicMarkerFactory();
         mdcAdapter = new BasicMDCAdapter();
     }

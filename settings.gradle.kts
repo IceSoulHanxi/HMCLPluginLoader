@@ -1,3 +1,3 @@
 rootProject.name = "HMCLPluginLoader"
-include("agent")
+include("loader")
 include("example")
