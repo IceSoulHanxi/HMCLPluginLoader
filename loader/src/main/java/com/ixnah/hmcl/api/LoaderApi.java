@@ -27,6 +27,7 @@ public class LoaderApi {
     private static final ThreadLocal<Integer> CLASS_READ_FLAGS = ThreadLocal.withInitial(() -> 0);
     private static final AtomicReference<String[]> ARGS = new AtomicReference<>();
     private static volatile PluginManager PLUGIN_MANAGER;
+    private static volatile boolean USE_JAVA_AGENT = false;
 
     @SafeVarargs
     public static void registerTransformers(Supplier<AsmClassTransformer>... transformerSuppliers) {
@@ -93,5 +94,13 @@ public class LoaderApi {
             }
         }
         return PLUGIN_MANAGER;
+    }
+
+    public static boolean isUseJavaAgent() {
+        return USE_JAVA_AGENT;
+    }
+
+    public static void setUseJavaAgent(boolean useJavaAgent) {
+        USE_JAVA_AGENT = useJavaAgent;
     }
 }

@@ -26,4 +26,11 @@ public class HmclPluginManager extends DefaultPluginManager {
                 .add(new HmclManifestPluginDescriptorFinder());
     }
 
+    @Override
+    protected PluginLoader createPluginLoader() {
+        return new CompoundPluginLoader()
+                .add(new DevelopmentPluginLoader(this), this::isDevelopment)
+                .add(new HmclJarPluginLoader(this), this::isNotDevelopment)
+                .add(new DefaultPluginLoader(this), this::isNotDevelopment);
+    }
 }

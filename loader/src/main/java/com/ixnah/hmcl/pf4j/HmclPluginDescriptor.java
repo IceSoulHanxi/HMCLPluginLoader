@@ -2,7 +2,19 @@ package com.ixnah.hmcl.pf4j;
 
 import org.pf4j.DefaultPluginDescriptor;
 
+import java.util.jar.Manifest;
+
 public class HmclPluginDescriptor extends DefaultPluginDescriptor {
+
+    private Manifest manifest;
+
+    public Manifest getManifest() {
+        return manifest;
+    }
+
+    public void setManifest(Manifest manifest) {
+        this.manifest = manifest;
+    }
 
     @Override
     protected HmclPluginDescriptor setPluginId(String pluginId) {

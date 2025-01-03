@@ -24,6 +24,7 @@ public class HmclManifestPluginDescriptorFinder extends ManifestPluginDescriptor
         pluginDescriptor.setPluginId("HMCL");
         pluginDescriptor.setPluginVersion(attributes.getValue("Implementation-Version"));
         pluginDescriptor.setPluginClass("com.ixnah.hmcl.pf4j.HmclPlugin");
+        pluginDescriptor.setManifest(manifest);
         return pluginDescriptor;
     }
 
