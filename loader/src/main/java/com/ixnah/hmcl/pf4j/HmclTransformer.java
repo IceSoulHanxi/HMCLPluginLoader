@@ -24,6 +24,11 @@ public class HmclTransformer implements AsmClassTransformer {
                     .filter(m -> "start".equals(m.name) && "(Ljavafx/stage/Stage;)V".equals(m.desc))
                     .findFirst()
                     .ifPresent(m -> setupContextClassLoader(m, modify));
+        } else if ("org/jackhuang/hmcl/task/Schedulers".equals(className)) {
+            classNode.methods.stream()
+                    .filter(m -> "shutdown".equals(m.name) && "()V".equals(m.desc))
+                    .findFirst()
+                    .ifPresent(m -> onShutdown(m, modify));
         }
         return modify.get();
     }
@@ -62,5 +67,15 @@ public class HmclTransformer implements AsmClassTransformer {
             modify.set(true);
             break;
         }
+    }
+
+    private static void onShutdown(MethodNode methodNode, AtomicBoolean modify) {
+        InsnList insnList = new InsnList();
+        insnList.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "com/ixnah/hmcl/api/LoaderApi", "getPluginManager", "()Lorg/pf4j/PluginManager;"));
+        insnList.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "org/pf4j/PluginManager", "stopPlugins", "()V"));
+        insnList.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "com/ixnah/hmcl/api/LoaderApi", "getPluginManager", "()Lorg/pf4j/PluginManager;"));
+        insnList.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "org/pf4j/PluginManager", "unloadPlugins", "()V"));
+        methodNode.instructions.insert(insnList);
+        modify.set(true);
     }
 }
