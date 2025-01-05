@@ -10,9 +10,8 @@ public class ExamplePlugin extends Plugin {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExamplePlugin.class);
 
-    @Override
-    public void start() {
-        LOGGER.info("ExamplePlugin start");
+    public ExamplePlugin() {
+        LOGGER.info("ExamplePlugin init");
         LoaderApi.registerTransformers(RemoveDevTipTransformer::new);
     }
 }

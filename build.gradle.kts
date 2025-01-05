@@ -1,7 +1,3 @@
-import org.xml.sax.Attributes
-import org.xml.sax.helpers.DefaultHandler
-import javax.xml.parsers.SAXParserFactory
-
 group = "com.ixnah.hmcl"
 version = "0.1"
 

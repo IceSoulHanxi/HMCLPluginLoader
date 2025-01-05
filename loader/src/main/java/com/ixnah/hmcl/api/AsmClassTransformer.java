@@ -1,4 +1,4 @@
-package com.ixnah.hmcl.asm;
+package com.ixnah.hmcl.api;
 
 import org.objectweb.asm.tree.ClassNode;
 

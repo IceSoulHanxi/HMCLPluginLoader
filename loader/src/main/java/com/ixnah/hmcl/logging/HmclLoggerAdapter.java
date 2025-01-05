@@ -1,10 +1,11 @@
 package com.ixnah.hmcl.logging;
 
+import com.ixnah.hmcl.api.LoaderApi;
 import org.slf4j.Marker;
 import org.slf4j.event.Level;
+import org.slf4j.helpers.FormattingTuple;
 import org.slf4j.helpers.LegacyAbstractLogger;
 import org.slf4j.helpers.MessageFormatter;
-import org.slf4j.helpers.NormalizedParameters;
 import org.slf4j.spi.LocationAwareLogger;
 
 import java.lang.invoke.MethodHandle;
@@ -18,8 +19,10 @@ public class HmclLoggerAdapter extends LegacyAbstractLogger implements LocationA
 
     private final EnumMap<Level, Object> LEVEL_MAP = new EnumMap<>(Level.class);
     private final MethodHandle logHandle;
+    private final MethodHandle getStackTraceHandle;
 
     public HmclLoggerAdapter(ClassLoader classLoader) throws Exception {
+        classLoader.loadClass("org.jackhuang.hmcl.util.logging.CallerFinder");
         Class<?> loggerClass = classLoader.loadClass("org.jackhuang.hmcl.util.logging.Logger");
         Class<?> levelClass = classLoader.loadClass("org.jackhuang.hmcl.util.logging.Level");
         Field logField = loggerClass.getField("LOG");
@@ -30,6 +33,9 @@ public class HmclLoggerAdapter extends LegacyAbstractLogger implements LocationA
         LEVEL_MAP.put(Level.INFO, levelClass.getField("INFO").get(null));
         LEVEL_MAP.put(Level.WARN, levelClass.getField("WARNING").get(null));
         LEVEL_MAP.put(Level.ERROR, levelClass.getField("ERROR").get(null));
+        Class<?> stringUtilsClass = classLoader.loadClass("org.jackhuang.hmcl.util.StringUtils");
+        Method getStackTranceMethod = stringUtilsClass.getMethod("getStackTrace", Throwable.class);
+        getStackTraceHandle = MethodHandles.lookup().unreflect(getStackTranceMethod);
     }
 
     @Override
@@ -40,11 +46,15 @@ public class HmclLoggerAdapter extends LegacyAbstractLogger implements LocationA
     @Override
     protected void handleNormalizedLoggingCall(Level level, Marker marker, String messagePattern, Object[] arguments, Throwable throwable) {
         Object hmclLevel = LEVEL_MAP.get(level);
-        NormalizedParameters np = NormalizedParameters.normalize(messagePattern, arguments, throwable);
-        String formattedMessage = MessageFormatter.basicArrayFormat(np.getMessage(), arguments);
+        FormattingTuple tuple = MessageFormatter.arrayFormat(messagePattern, arguments, throwable);
         try {
-            logHandle.invokeExact(hmclLevel, formattedMessage);
-        } catch (Throwable ignored) {
+            String msg = tuple.getMessage();
+            if (throwable != null) {
+                msg = msg + "\n" + getStackTraceHandle.invoke(throwable);
+            }
+            logHandle.invoke(hmclLevel, msg);
+        } catch (Throwable e) {
+            e.printStackTrace();
         }
     }
 
@@ -55,12 +65,12 @@ public class HmclLoggerAdapter extends LegacyAbstractLogger implements LocationA
 
     @Override
     public boolean isTraceEnabled() {
-        return true;
+        return LoaderApi.getPluginManager().isDevelopment();
     }
 
     @Override
     public boolean isDebugEnabled() {
-        return true;
+        return LoaderApi.getPluginManager().isDevelopment();
     }
 
     @Override

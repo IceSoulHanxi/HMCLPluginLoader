@@ -5,13 +5,13 @@ import org.slf4j.event.Level;
 import org.slf4j.helpers.LegacyAbstractLogger;
 import org.slf4j.spi.LocationAwareLogger;
 
-public class DefaultLoggerAdapter extends LegacyAbstractLogger implements LocationAwareLogger {
-    private static final String CALLER_NAME = DefaultLoggerAdapter.class.getName();
+public class SwitchLoggerAdapter extends LegacyAbstractLogger implements LocationAwareLogger {
+    private static final String CALLER_NAME = SwitchLoggerAdapter.class.getName();
 
     private volatile LocationAwareLogger delegate;
     private final String name;
 
-    public DefaultLoggerAdapter(LocationAwareLogger delegate, String name) {
+    public SwitchLoggerAdapter(LocationAwareLogger delegate, String name) {
         this.delegate = delegate;
         this.name = name;
     }

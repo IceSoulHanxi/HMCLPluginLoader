@@ -1,9 +1,14 @@
 package com.ixnah.hmcl.api;
 
-import com.ixnah.hmcl.asm.AsmClassTransformer;
 import com.ixnah.hmcl.pf4j.HmclPluginManager;
 import org.pf4j.PluginManager;
+import org.pf4j.PluginWrapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.Map;
@@ -22,6 +27,7 @@ public class LoaderApi {
     }
 
     public static final String HMCL_MAIN_CLASS = "org.jackhuang.hmcl.Main";
+    private static final Logger LOG = LoggerFactory.getLogger(LoaderApi.class);
     private static final Map<String, AsmClassTransformer> TRANSFORMERS = new ConcurrentHashMap<>();
     private static final ThreadLocal<Integer> CLASS_WRITE_FLAGS = ThreadLocal.withInitial(() -> 0);
     private static final ThreadLocal<Integer> CLASS_READ_FLAGS = ThreadLocal.withInitial(() -> 0);
@@ -89,7 +95,13 @@ public class LoaderApi {
         if (PLUGIN_MANAGER == null) {
             synchronized (LoaderApi.class) {
                 if (PLUGIN_MANAGER == null) {
-                    PLUGIN_MANAGER = new HmclPluginManager(Paths.get(".minecraft/plugins"));
+                    Path pluginsDir = Paths.get(System.getProperty("hmcl.plugins.dir", ".minecraft/plugins"));
+                    PLUGIN_MANAGER = new HmclPluginManager(pluginsDir);
+                    try {
+                        Files.createDirectories(pluginsDir);
+                    } catch (IOException e) {
+                        LOG.error("Can't create plugins dir", e);
+                    }
                 }
             }
         }
@@ -102,5 +114,13 @@ public class LoaderApi {
 
     public static void setUseJavaAgent(boolean useJavaAgent) {
         USE_JAVA_AGENT = useJavaAgent;
+    }
+
+    public static Path initPluginDir(String pluginId) throws IOException {
+        requireNonNull(pluginId, "pluginId is null!");
+        PluginWrapper plugin = getPluginManager().getPlugin(pluginId);
+        requireNonNull(plugin, () -> "plugin [" + pluginId + "] not exist");
+        Path resolved = plugin.getPluginPath().resolve("../" + pluginId).toAbsolutePath();
+        return Files.createDirectories(resolved);
     }
 }

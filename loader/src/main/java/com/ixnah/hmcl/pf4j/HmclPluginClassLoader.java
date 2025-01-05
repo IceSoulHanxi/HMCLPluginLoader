@@ -7,6 +7,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.pf4j.PluginClassLoader;
 import org.pf4j.PluginDescriptor;
 import org.pf4j.PluginManager;
+import org.pf4j.PluginWrapper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -25,22 +26,39 @@ import java.util.jar.Manifest;
 
 public class HmclPluginClassLoader extends PluginClassLoader {
     protected static final Map<String, Boolean> SECURE_JAR_MAP = new ConcurrentHashMap<>();
-    protected final Map<String, Class<?>> classes = new ConcurrentHashMap<>();
+    protected final PluginManager pluginManager;
     protected final PluginDescriptor pluginDescriptor;
 
     public HmclPluginClassLoader(PluginManager pluginManager, PluginDescriptor pluginDescriptor, ClassLoader parent) {
         super(pluginManager, pluginDescriptor, parent);
+        this.pluginManager = pluginManager;
         this.pluginDescriptor = pluginDescriptor;
     }
 
     @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
-        Class<?> result = classes.get(name);
-
-        if (result != null) {
-            return result;
+    protected Class<?> loadClassFromDependencies(String className) {
+        // 如果当前是HMCL则尝试从所有插件中查找类
+        if ("HMCL".equals(pluginDescriptor.getPluginId())) {
+            for (PluginWrapper plugin : pluginManager.getResolvedPlugins()) {
+                if ("HMCL".equals(plugin.getPluginId())) continue;
+                try {
+                    HmclPluginClassLoader classLoader = (HmclPluginClassLoader) plugin.getPluginClassLoader();
+                    return classLoader.loadClassIsolated(className);
+                } catch (Throwable ignored) {
+                }
+            }
         }
+        return super.loadClassFromDependencies(className);
+    }
 
+    protected Class<?> loadClassIsolated(String className) throws ClassNotFoundException {
+        Class<?> result = findLoadedClass(className);
+        return result != null ? result : findClass(className);
+    }
+
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+        Class<?> result = null;
         String path = name.replace('.', '/');
         URL url = this.findResource(path.concat(".class"));
         if (url != null) {
@@ -56,20 +74,7 @@ public class HmclPluginClassLoader extends PluginClassLoader {
                     }
                 }
 
-                if (!LoaderApi.isUseJavaAgent() && bos.size() > 0) {
-                    ClassReader reader = new ClassReader(bos.toByteArray());
-                    ClassNode node = new ClassNode();
-                    reader.accept(node, LoaderApi.getClassReadFlogs());
-                    boolean modify = LoaderApi.allTransformer().map(t -> t.transform(this, path, null, node))
-                            .reduce(Boolean::logicalOr).orElse(false);
-                    if (modify) {
-                        ClassWriter writer = new ClassWriter(LoaderApi.getClassWriteFlags());
-                        node.accept(writer);
-                        LoaderApi.setClassWriteFlags(0);
-                        bos.reset();
-                        bos.write(writer.toByteArray());
-                    }
-                }
+                transform(path, bos);
 
                 if (bos.size() > 0) {
                     tryCreatePackage(name);
@@ -96,15 +101,10 @@ public class HmclPluginClassLoader extends PluginClassLoader {
             }
         }
 
-        if (result == null) {
-            result = super.findClass(name);
-        }
-
-        classes.put(name, result);
-        return result;
+        return result == null ? super.findClass(name) : result;
     }
 
-    private void tryCreatePackage(String name) {
+    protected void tryCreatePackage(String name) {
         int dot = name.lastIndexOf('.');
         if (dot != -1) {
             String pkgName = name.substring(0, dot);
@@ -124,6 +124,22 @@ public class HmclPluginClassLoader extends PluginClassLoader {
                     }
                 }
             }
+        }
+    }
+
+    protected void transform(String className, ByteArrayOutputStream bos) throws IOException {
+        if (LoaderApi.isUseJavaAgent() || bos.size() == 0) return;
+        ClassReader reader = new ClassReader(bos.toByteArray());
+        ClassNode node = new ClassNode();
+        reader.accept(node, LoaderApi.getClassReadFlogs());
+        boolean modify = LoaderApi.allTransformer().map(t -> t.transform(this, className, null, node))
+                .reduce(Boolean::logicalOr).orElse(false);
+        if (modify) {
+            ClassWriter writer = new ClassWriter(LoaderApi.getClassWriteFlags());
+            node.accept(writer);
+            LoaderApi.setClassWriteFlags(0);
+            bos.reset();
+            bos.write(writer.toByteArray());
         }
     }
 

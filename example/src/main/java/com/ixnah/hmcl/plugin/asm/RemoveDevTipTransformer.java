@@ -1,6 +1,6 @@
 package com.ixnah.hmcl.plugin.asm;
 
-import com.ixnah.hmcl.asm.AsmClassTransformer;
+import com.ixnah.hmcl.api.AsmClassTransformer;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 

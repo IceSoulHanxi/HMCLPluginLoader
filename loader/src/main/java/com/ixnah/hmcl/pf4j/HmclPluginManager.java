@@ -33,4 +33,11 @@ public class HmclPluginManager extends DefaultPluginManager {
                 .add(new HmclJarPluginLoader(this), this::isNotDevelopment)
                 .add(new DefaultPluginLoader(this), this::isNotDevelopment);
     }
+
+    @Override
+    protected PluginRepository createPluginRepository() {
+        return new CompoundPluginRepository()
+                .add(new DevelopmentPluginRepository(getPluginsRoots()), this::isDevelopment)
+                .add(new JarPluginRepository(getPluginsRoots()), this::isNotDevelopment);
+    }
 }

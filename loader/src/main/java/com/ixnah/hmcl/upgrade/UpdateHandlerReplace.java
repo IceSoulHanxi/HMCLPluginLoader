@@ -1,4 +1,4 @@
-package com.ixnah.hmcl.util;
+package com.ixnah.hmcl.upgrade;
 
 public class UpdateHandlerReplace {
 
@@ -13,6 +13,6 @@ public class UpdateHandlerReplace {
             }
         }
 
-        return j > 2;
+        return j > 1;
     }
 }
