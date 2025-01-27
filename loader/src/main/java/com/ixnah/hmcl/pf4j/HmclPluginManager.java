@@ -40,4 +40,9 @@ public class HmclPluginManager extends DefaultPluginManager {
                 .add(new DevelopmentPluginRepository(getPluginsRoots()), this::isDevelopment)
                 .add(new JarPluginRepository(getPluginsRoots()), this::isNotDevelopment);
     }
+
+    @Override
+    protected VersionManager createVersionManager() {
+        return new HmclVersionManager();
+    }
 }
