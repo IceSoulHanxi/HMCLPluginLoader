@@ -16,8 +16,11 @@ jobs:
           java-version: '11'
           java-package: 'jdk+fx'
 
+      - name: Set gradlew executable
+        run: chmod +x gradlew
+
       - name: Build with Gradle
-        run: .\gradlew makeExecutables --no-daemon
+        run: ./gradlew makeExecutables --no-daemon
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4
