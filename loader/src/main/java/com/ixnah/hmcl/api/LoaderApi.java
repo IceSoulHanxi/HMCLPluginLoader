@@ -120,7 +120,7 @@ public class LoaderApi {
         requireNonNull(pluginId, "pluginId is null!");
         PluginWrapper plugin = getPluginManager().getPlugin(pluginId);
         requireNonNull(plugin, () -> "plugin [" + pluginId + "] not exist");
-        Path resolved = plugin.getPluginPath().resolve("../" + pluginId).toAbsolutePath();
+        Path resolved = plugin.getPluginPath().resolve("../" + pluginId).toRealPath();
         return Files.createDirectories(resolved);
     }
 }
