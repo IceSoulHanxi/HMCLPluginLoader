@@ -21,6 +21,8 @@ tasks.jar {
     dependsOn(tasks["shadowJar"])
 }
 
+val jarFile = tasks.jar.get().archiveFile.get().asFile
+
 tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
     archiveClassifier.set(null as String?)
     manifest {
@@ -48,4 +50,29 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
             ).joinToString(" ")
         )
     }
+}
+
+val makeExecutables = tasks.register("makeExecutables") {
+    dependsOn(tasks.jar)
+    doLast {
+        val tmpDir = temporaryDir.absoluteFile.also(File::mkdirs)
+        val execHeaderFile = File(tmpDir, "HMCLauncher.exe").also {
+            if (it.exists()) return@also
+            val fileUrl = uri("https://github.com/HMCL-dev/HMCL/raw/refs/heads/main/HMCL/src/main/resources/assets/HMCLauncher.exe").toURL()
+            val tmpFile = File(tmpDir, "${System.currentTimeMillis()}.tmp")
+            fileUrl.openStream().copyTo(tmpFile.outputStream())
+            tmpFile.copyTo(it, true)
+            tmpFile.deleteOnExit()
+        }
+
+        val output = File(jarFile.parentFile, jarFile.nameWithoutExtension + ".exe")
+        output.outputStream().use {
+            it.write(execHeaderFile.readBytes())
+            it.write(jarFile.readBytes())
+        }
+    }
+}
+
+tasks.build {
+    dependsOn(makeExecutables)
 }
