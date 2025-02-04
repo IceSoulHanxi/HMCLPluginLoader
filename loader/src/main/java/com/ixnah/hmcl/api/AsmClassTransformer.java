@@ -15,4 +15,8 @@ public interface AsmClassTransformer {
     }
 
     boolean transform(ClassLoader loader, String className, ProtectionDomain protectionDomain, ClassNode classNode);
+
+    default boolean checkClassName(ClassLoader loader, String className) {
+        return true;
+    }
 }

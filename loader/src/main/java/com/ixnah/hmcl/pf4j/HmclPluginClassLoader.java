@@ -131,15 +131,23 @@ public class HmclPluginClassLoader extends PluginClassLoader {
         if (LoaderApi.isUseJavaAgent() || bos.size() == 0) return;
         ClassReader reader = new ClassReader(bos.toByteArray());
         ClassNode node = new ClassNode();
-        reader.accept(node, LoaderApi.getClassReadFlogs());
+        LoaderApi.allTransformer().forEach(t -> t.checkClassName(this, className));
+        try {
+            reader.accept(node, LoaderApi.getClassReadFlogs());
+        } finally {
+            LoaderApi.setClassReadFlags(0);
+        }
         boolean modify = LoaderApi.allTransformer().map(t -> t.transform(this, className, null, node))
                 .reduce(Boolean::logicalOr).orElse(false);
         if (modify) {
-            ClassWriter writer = new ClassWriter(LoaderApi.getClassWriteFlags());
-            node.accept(writer);
-            LoaderApi.setClassWriteFlags(0);
-            bos.reset();
-            bos.write(writer.toByteArray());
+            try {
+                ClassWriter writer = new ClassWriter(LoaderApi.getClassWriteFlags());
+                node.accept(writer);
+                bos.reset();
+                bos.write(writer.toByteArray());
+            } finally {
+                LoaderApi.setClassWriteFlags(0);
+            }
         }
     }
 
